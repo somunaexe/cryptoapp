@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import HTMLReactParser from 'html-react-parser';
 import { useParams } from 'react-router-dom';
 import millify from 'millify';
-import { Col, Row, Typography, Select } from 'antd';
-import { MoneyCollectOutlined, DollarCircleOutlined, FundOutlined, ExclamationCircleOutlined, StopOutlined, TrophyOutlined, CheckOutlined, NumberOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Col, Row, Typography } from 'antd';
+import { Select } from 'antd';
 
-import { useGetCryptoDetailsQuery } from '../services/cryptoApi';
+import { MoneyCollectOutlined, DollarCircleOutlined, FundOutlined, ExclamationCircleOutlined, StopOutlined, TrophyOutlined, CheckOutlined, NumberOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import Loader from './Loader';
+
+import { useGetCryptoDetailsQuery, useGetCryptoHistoryQuery } from '../services/cryptoApi';
 import LineChart from './LineChart';
 
 const { Title, Text } = Typography;
@@ -15,12 +18,19 @@ const CryptoDetails = () => {
   const { coinId } = useParams();
   const [timePeriod, setTimePeriod] = useState('7d');
   const { data, isFetching } = useGetCryptoDetailsQuery(coinId);
+  const { data: coinHistory, refetch } = useGetCryptoHistoryQuery({ coinId, timePeriod });
+
+  // Call refetch whenever timePeriod changes
+  React.useEffect(() => {
+    refetch();
+  }, [timePeriod, refetch]);
+
   const cryptoDetails = data?.data?.coin;
-  console.log(cryptoDetails);
+  // console.log(cryptoDetails);
 
-  if (isFetching || !cryptoDetails) return <div>Loading...</div>;
+  if(isFetching) return <Loader />;
 
-  const time = ['3h', '24h', '7d', '30d', '1y', '3m', '3y', '5y'];
+  const time = ['3h', '24h', '7d', '30d', '3m', '1y', '3y', '5y'];
 
   const stats = [
     { title: 'Price to USD', value: `$ ${cryptoDetails?.price && millify(cryptoDetails?.price)}`, icon: <DollarCircleOutlined /> },
@@ -38,6 +48,8 @@ const CryptoDetails = () => {
     { title: 'Circulating Supply', value: `$ ${cryptoDetails?.supply?.circulating && millify(cryptoDetails?.supply?.circulating)}`, icon: <ExclamationCircleOutlined /> },
   ];
 
+  console.log(coinHistory);
+
   return (
     <Col className="coin-detail-container">
       <Col className="coin-heading-container">
@@ -50,17 +62,19 @@ const CryptoDetails = () => {
         </p>
       </Col>
       <Select 
-        defaultvalue="7d" 
+        value={timePeriod}
         className="select-timeperiod" 
         placeholder="Select Time Period" 
-        onChange={(value) => setTimePeriod(value)}
+        onChange={(value) =>  {
+          setTimePeriod(value);
+        console.log(value);}}
         >
           {time.map((date) => <Option key={date}>{date}</Option>)}
       </Select>
-      <LineChart coinHistory={coinHistory} currentPrice={millify && (cryptoDetails.price)} coinName={cryptoDetails.name}/>
+      <LineChart coinHistory={coinHistory} currentPrice={millify(cryptoDetails?.price)} coinName={cryptoDetails?.name}/>
       <Col className='stats-container'>
         <Col className='coin-value-statistics'>
-          <Col className='coin-value=statistics-heading'>
+          <Col className='coin-value-statistics-heading'>
             <Title level={3} className="coin-details-heading">
               {cryptoDetails.name} Value Statistics
             </Title>

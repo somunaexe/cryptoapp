@@ -22,3 +22,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 src/services/cryptoApi.js
+src/services/cryptoNewsApi.js
+src/services/cryptoApi.js
